@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.gutenberg.org)",
+      "WebFetch(domain:sk.wikisource.org)",
+      "Bash(curl -s \"https://sk.wikisource.org/w/api.php?action=query&titles=Proston%C3%A1rodn%C3%A9+slovensk%C3%A9+povesti&prop=revisions&rvprop=content&rvslots=main&format=json\")",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}
