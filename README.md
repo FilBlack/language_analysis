@@ -58,8 +58,6 @@ The training data is cleaned before use: everything except letters and apostroph
 
 **Bayes training:** Every word in the training text is counted into a per-language frequency dictionary. After all languages are processed, the global vocabulary size is measured and log-prior probabilities are computed once and stored.
 
-For each analyzer we first call its Train method and then call its Analyzer method on the target string.
-
 ## Alternative algorithms 
 
 **Word n-grams:** Instead of substrings of characters, use sequences of whole words (bigrams, trigrams). This captures grammatical patterns but requires far more training data since the word vocabulary is much larger than the character vocabulary.
@@ -77,29 +75,55 @@ The program is split across four source files. Each has a distinct responsibilit
 
 **TextProcessing.cs**
 
-`TextCleaner` handles all input reading and normalisation. It can load `.txt`, `.pdf` and `.docx` files using the PdfPig and OpenXml libraries, and exposes a `Clean` method that strips everything except letters and apostrophes, lowercases the result, and collapses whitespace. All three analyzers pass their training files through this class before doing any counting. `Tokenize` splits a cleaned string into a word list for the analyzers that work with words.
+`TextCleaner` handles all input reading and normalisation.
 
-`TextStats` computes basic statistics about a tokenized text - word count, unique word count, average word length, and type-token ratio. These are written to the batch report and have no effect on the predictions. Currently not used because of clutter.
+- `LoadFromFile(path)` - reads a `.txt`, `.pdf` (PdfPig), or `.docx` (OpenXml) file and returns its raw text; throws `NotSupportedException` for any other extension.
+- `Clean(raw)` - lowercases the text, replaces everything except letters and apostrophes with a space, and collapses runs of whitespace into single spaces. Accented characters are preserved.
+- `Tokenize(cleaned)` - splits a cleaned string on spaces and returns the non-empty parts as a word list.
+
+`TextStats` computes basic statistics (word count, unique words, average length, type-token ratio) from a token list. Currently unused due to clutter.
 
 **Analyzers.cs**
 
-`Languages` is a static class that holds the list of supported language codes and maps them to display names.
+`Languages` is a static class holding the six supported language codes and a `DisplayName(code)` lookup.
 
-`LanguageAnalyzer` is the abstract base class for all three detectors. It provides `LoadTrainingTexts` (which finds and cleans all training files for one language), and `ComputeConfidenceValue` (which measures how far ahead the winning language is from the runner up and expresses this as a percentage).
+`LanguageAnalyzer` is the abstract base for all three detectors.
 
-`NGramAnalyzer` implements the character sliding window, profile building and Out-of-Place distance scoring. It keeps a trained ranked profile per language in a dictionary of dictionaries.
+- `Train(resourcesRoot, languages)` - abstract; each subclass builds its model from the training files.
+- `Analyze(cleanedInput)` - abstract; scores every language and returns a sorted `AnalysisResult`.
+- `LoadTrainingTexts(resourcesRoot, language)` - reads and cleans all files under `training/<language>/`, silently skipping unsupported formats.
+- `ComputeConfidenceValue(sortedScores, lowerIsBetter)` - expresses the gap between the winning and runner-up scores as a percentage, handling both distance-based and log-probability-based metrics.
 
-`StopWordAnalyzer` loads per-language stop-word lists into hash sets during training and computes the hit ratio on each analysis call.
+`NGramAnalyzer` - sliding-window character n-gram detector.
 
-`NaiveBayesAnalyzer` counts word frequencies per language during training, computes log-priors, and scores each input as the sum of the log-prior and all per-word log-likelihoods with Laplace smoothing.
+- `Train` - counts all n-grams across the training text, keeps the top 300 by frequency, and replaces counts with ranks (1 = most common) per language.
+- `Analyze` - builds the same ranked profile from the input and sums the absolute rank differences against each language profile (Out-of-Place metric); the language with the smallest total wins.
+- `GenerateNGrams(cleanedText)` - extracts every n-character substring from each word using a sliding window, public so it can be reused.
+
+`StopWordAnalyzer` - stopword frequency detector.
+
+- `Train` - loads each language's stopword file into a `HashSet<string>`.
+- `Analyze` - tokenizes the input and picks the language whose stopword set has the highest hit ratio.
+
+`NaiveBayesAnalyzer` - log-space Naive Bayes classifier.
+
+- `Train` - counts word frequencies per language, measures global vocabulary size, and stores the log-prior for each language.
+- `Analyze` - scores each language as `log P(language) + Σ log P(word | language)` with Laplace smoothing (α = 1) to avoid negative infinity on unseen words.
 
 **Evaluation.cs**
 
-`Evaluator` loads a tab-separated labelled test file, runs all analyzers on every sample, and prints an accuracy table broken down by analyzer and by language. `AnalyzerStats` and `ConsensusStats` accumulate the per-language and overall correct/total counts.
+`AnalyzerStats` accumulates per-language and overall correct/total counts for one analyzer via `Record(trueLanguage, predictedLanguage)`, and exposes `OverallAccuracy()` and `AccuracyForLanguage(language)`.
+
+`ConsensusStats` does the same for the majority-vote consensus without the per-language breakdown.
+
+`Evaluator` (static) - `LoadSamples(path)` parses a `langcode TAB sentence` TSV file; `Run(samples, analyzers, cleaner)` executes all analyzers on every sample, tallies predictions via majority vote, and prints an overall accuracy table followed by a per-language breakdown.
 
 **Program.cs**
 
-`Program` parses command-line arguments in a simple loop and chooses one of three modes to use: interactive (prompt loop), batch (reads an input file, writes a report), or evaluation. The batch mode writes a report containing each analyzer's prediction with confidence score, a consensus line, and a summary with analyzer and language agreement statistics.
+`Program` - `Main(args)` parses the command-line flags and dispatches to one of three modes.
+
+- `RunInteractive(cleaner, analyzers)` - reads one line at a time, cleans it, runs all analyzers, and prints each analyzer's prediction; exits on an empty line.
+- `RunBatch(cleaner, analyzers, inputPath, outputPath)` - processes each line of the input file, writes per-line predictions with confidence scores and a consensus line to a report file, then appends a summary of analyzer and language agreement statistics.
 
 
 ## User Guide 

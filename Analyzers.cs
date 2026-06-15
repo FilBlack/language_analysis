@@ -184,8 +184,7 @@ namespace LanguageDetector
         }
 
         // Helper: reads and cleans every training file for one language from the
-        // folder {resourcesRoot}/training/{language}. Files we cannot read are
-        // skipped. It returns one cleaned string for each file.
+        // folder, returns one cleaned string for each file.
         protected List<string> LoadTrainingTexts(string resourcesRoot, string language)
         {
             List<string> texts = new List<string>();

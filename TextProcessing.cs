@@ -342,7 +342,6 @@ namespace LanguageDetector
         }
 
         // Returns the ratio of unique words to total words, between 0.0 and 1.0.
-        // A value near 1.0 means nearly every word is different (varied vocabulary).
         public double TypeTokenRatio()
         {
             int total = WordCount;
