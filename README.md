@@ -5,7 +5,7 @@ This is a simple tool designed to take a text sample and give the most likely ca
 
 ## Algorithm 
 
-A very simple approach would be to scan the input sample for characters that belong exclusively to one of the languages — for example `ß` only appears in German, or `ř` only appears in Czech — but that would be uninteresting. Instead I have chosen languages that all use the Latin alphabet and refrain from using unique characters as an indicator. This can however basically be through in the special case of 1-grams, where the ngrams are the individual characters of the language themselves.
+A very simple approach would be to scan the input sample for characters that belong exclusively to one of the languages - for example `ß` only appears in German, or `ř` only appears in Czech - but that would be uninteresting. Instead I have chosen languages that all use the Latin alphabet and refrain from using unique characters as an indicator. This can however basically be through in the special case of 1-grams, where the ngrams are the individual characters of the language themselves.
 
 The three methods I have chosen are: 
 
@@ -41,7 +41,7 @@ P(text | language) = P(word₁ | language) × P(word₂ | language) × ... × P(
 
 P(word | language) is estimated from training data as the fraction of training words that were this word. P(language) is the fraction of all training words that belong to this language.
 
-Multiplying many small probabilities together causes numerical underflow, so we work in log space and sum log-probabilities instead. We also apply Laplace smoothing — adding 1 to every word count — so that words unseen during training do not immediately give a score of negative infinity.
+Multiplying many small probabilities together causes numerical underflow, so we work in log space and sum log-probabilities instead. We also apply Laplace smoothing - adding 1 to every word count - so that words unseen during training do not immediately give a score of negative infinity.
 
 
 ### Training 
@@ -62,7 +62,7 @@ The training data is cleaned before use: everything except letters and apostroph
 
 **Word ngrams:** Instead of substrings of characters, use sequences of whole words (bigrams, trigrams). This captures grammatical patterns but requires far more training data since the word vocabulary is much larger than the character vocabulary.
 
-**Dictionary lookup:** Check what fraction of input words appear in a comprehensive dictionary for each language. Simple to implement but fragile — it depends on having a complete dictionary and breaks on proper nouns and unusual words.
+**Dictionary lookup:** Check what fraction of input words appear in a comprehensive dictionary for each language. Simple to implement but fragile - it depends on having a complete dictionary and breaks on proper nouns and unusual words.
 
 **Markov chain character model:** Model the probability of each character conditioned on the previous k characters. This captures more context than independent ngram frequency counts but is essentially a more principled version of what the ngram approach already does.
 
@@ -171,19 +171,19 @@ The stop-word lists come from the [stopwords-iso](https://github.com/stopwords-i
 
 The training texts are public-domain books:
 
-- en: Pride and Prejudice (Jane Austen) — Project Gutenberg
-- cs: R.U.R. (Karel Čapek) — Project Gutenberg
-- de: Die Verwandlung (Franz Kafka) — Project Gutenberg
-- es: Don Quijote (Miguel de Cervantes) — Project Gutenberg
-- it: La Divina Commedia (Dante Alighieri) — Project Gutenberg
-- sk: Prostonárodné slovenské povesti (Pavol Dobšinský) — Slovak Wikisource
+- en: Pride and Prejudice (Jane Austen) - Project Gutenberg
+- cs: R.U.R. (Karel Čapek) - Project Gutenberg
+- de: Die Verwandlung (Franz Kafka) - Project Gutenberg
+- es: Don Quijote (Miguel de Cervantes) - Project Gutenberg
+- it: La Divina Commedia (Dante Alighieri) - Project Gutenberg
+- sk: Prostonárodné slovenské povesti (Pavol Dobšinský) - Slovak Wikisource
 
 
 ## What is missing 
 
 The CLI is very crude and the visual aspect of it could be improved a lot.
 
-Through the nature of this project the code is infinitely expandable — you can simply add another analyzer and aggregate its results into the consensus. I felt that three methods of analysis would be enough and I believe I was proven right by the test data: the consensus method achieved around 95% accuracy on the 173-sentence test set, beating each individual analyzer.
+Through the nature of this project the code is infinitely expandable - you can simply add another analyzer and aggregate its results into the consensus. I felt that three methods of analysis would be enough and I believe I was proven right by the test data: the consensus method achieved around 95% accuracy on the 173-sentence test set, beating each individual analyzer.
 
 I could have found more books to increase the training set size and possibly improved the accuracy of the ngram methods for n=3 and n=4.
 
@@ -207,7 +207,7 @@ Nonetheless I enjoyed working on the project and learning the theory behind lang
 
 It was interesting to see the results of the tests. I was expecting Bayes to underperform due to the small training set size, but it actually performed the best across all methods. I was also happy to see that the consensus method beat all individual analyzers.
 
-The largest surprise was that the ngram analysis works best for n=2. This may be a consequence of the small training set — shorter ngrams appear more often and produce more reliable frequency estimates from limited data — and this is a potential area of exploration.
+The largest surprise was that the ngram analysis works best for n=2. This may be a consequence of the small training set - shorter ngrams appear more often and produce more reliable frequency estimates from limited data - and this is a potential area of exploration.
 
 My hypothesis was that Slovak and Czech would be the hardest pair to distinguish and it was proven correct. I also thought Spanish and Italian might be frequently confused with each other but that turned out not to be the case.
 

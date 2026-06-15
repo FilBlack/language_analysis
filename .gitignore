@@ -9,3 +9,5 @@ obj/
 
 # Generated analysis reports
 *.report.txt
+
+.claude/
