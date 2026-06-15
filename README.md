@@ -43,6 +43,113 @@ P(word | language) is estimated from training data as the fraction of training w
 
 Multiplying many small probabilities together causes numerical underflow, so we work in log space and sum log-probabilities instead. We also apply Laplace smoothing - adding 1 to every word count - so that words unseen during training do not immediately give a score of negative infinity.
 
+## User Guide 
+The program has three modes: interactive, batch, and evaluation. All modes train the analyzers on startup before doing anything else.
+
+
+Build:
+
+```
+dotnet build
+```
+
+### Interactive mode
+
+After running the command you enter interactive mode: 
+
+```
+dotnet run -- 
+Training analyzers...
+Paste a string to analyze (empty line to quit):
+> Sample string
+  N-gram (n=2): Spanish
+  N-gram (n=3): English
+  N-gram (n=4): English
+  Stop-word frequency: English
+  Naive Bayes: Italian
+
+> 
+```
+
+Type or paste one string at a time and get an immediate prediction from all five analyzers (ngram n=2, ngram n=3, ngram n=4, Stop-word, Naive Bayes). 
+Pressing enter with an empty line exits interactive mode. 
+
+```
+dotnet run
+```
+
+### Batch mode
+
+You can create an input file to analyze language in batch. 
+Each line in the input file is one sample. 
+The program runs five analyzers on each line and writes a report file next to the input file.
+For example if you enter filename.txt, a report file will be generated at: filename.txt.report.txt
+
+Example analysis output: 
+The n/m indicate that the analyzer agreed with consensus n times out of m samples or that the analyzer got n answers correct out of m samples, this can be extrapolated from context. 
+
+```
+[Line 36] Ho bisogno di un caffè.
+  Stats : 5 words, 5 unique, avg-len=3.6
+         ttr=1.00 long-words=1 longest=bisogno
+  N-gram (n=2): Italian [9% conf] (top: it, en, es)
+  N-gram (n=3): Italian [10% conf] (top: it, en, cs)
+  N-gram (n=4): English [0% conf] (top: en, cs, sk)
+  Stop-word frequency: Italian [100% conf] (top: it, en, cs)
+  Naive Bayes: Italian [19% conf] (top: it, es, sk)
+  Consensus: Italian (4/5 agree)
+----------------------------------------------------------------------
+
+Summary
+======================================================================
+Lines analyzed                     : 30
+Full agreement (5/5)          : 22
+Partial agreement                  : 8
+No agreement                       : 0
+
+Overall agreement with consensus
+----------------------------------------------------------------------
+N-gram (n=2)                29/30  96.7%
+N-gram (n=3)                26/30  86.7%
+N-gram (n=4)                28/30  93.3%
+Stop-word frequency         27/30  90.0%
+Naive Bayes                 27/30  90.0%
+```
+
+```
+dotnet run -- input.txt
+```
+
+### Evaluation mode
+
+You can also test all of the analyzers in bulk on a labeled dataset in the form a tsv file. 
+Run five analyzers (ngram n=2, ngram n=3, ngram n=4, Stop-word, Naive Bayes) on every sample in a labelled test file and prints per-analyzer accuracy and a per language breakdown to the console.
+
+The test file must be tab-separated with the language code first: `langcode TAB sentence`.
+
+Example output: 
+```
+Per-language: Naive Bayes
+------------------------------------------------------------
+  English   45/45  100.0%
+  Czech     31/32  96.9%
+  Slovak    22/31  71.0%
+  German    23/23  100.0%
+  Spanish   26/26  100.0%
+  Italian   16/16  100.0%
+
+------------------------------------------------------------
+```
+
+n/m represents that the analyzer got n answers correct out of m samples. 
+
+```
+dotnet run -- --eval test\test_data.tsv
+```
+
+A pre-built test set with 173 labelled sentences (en, cs, sk, de, es, it) is included in the `test/` folder.
+
+
 
 ### Training 
 
@@ -124,45 +231,6 @@ The program is split across four source files. Each has a distinct responsibilit
 
 - `RunInteractive(cleaner, analyzers)` - reads one line at a time, cleans it, runs all analyzers, and prints each analyzer's prediction, exits on an empty line.
 - `RunBatch(cleaner, analyzers, inputPath, outputPath)` - processes each line of the input file, writes per-line predictions with confidence scores and a consensus line to a report file, then appends a summary of analyzer and language agreement statistics.
-
-
-## User Guide 
-The program has three modes: interactive, batch, and evaluation. All modes train the analyzers on startup before doing anything else.
-
-
-Build:
-
-```
-dotnet build
-```
-
-### Interactive mode
-
-Type or paste one string at a time and get an immediate prediction from all five analyzers (ngram n=2, ngram n=3, ngram n=4, Stop-word, Naive Bayes). An empty line quits.
-
-```
-dotnet run
-```
-
-### Batch mode
-
-One sentence per line in the input file. The program runs five analyzers on each line and writes a report file next to the input file.
-
-```
-dotnet run -- input.txt
-```
-
-### Evaluation mode
-
-Runs five analyzers (ngram n=2, ngram n=3, ngram n=4, Stop-word, Naive Bayes) on every sample in a labelled test file and prints per-analyzer accuracy and a per language breakdown to the console.
-
-The test file must be tab-separated with the language code first: `langcode TAB sentence`.
-
-```
-dotnet run -- --eval test\test_data.tsv
-```
-
-A pre-built test set with 173 labelled sentences (en, cs, sk, de, es, it) is included in the `test/` folder.
 
 
 ## Data sources

@@ -490,9 +490,9 @@ namespace LanguageDetector
                     int lineNumber = i + 1;
                     string lineLabel = GetLineLabel(lineNumber);
                     writer.WriteLine(lineLabel + preview);
-                    // Uncomment the next line to include text statistics in the report:
-                    // TextStats stats = TextStats.Compute(cleaner.Tokenize(cleaned));
-                    // stats.WriteToReport(writer);
+                    // Statistics not included 
+                    TextStats stats = TextStats.Compute(cleaner.Tokenize(cleaned));
+                    stats.WriteToReport(writer);
                     List<AnalysisResult> results = AnalyzeText(analyzers, cleaned);
                     List<string> predictions = CollectPredictions(results);
                     int resultCount = results.Count;
