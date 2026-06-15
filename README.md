@@ -58,6 +58,7 @@ The training data is cleaned before use: everything except letters and apostroph
 
 **Bayes training:** Every word in the training text is counted into a per-language frequency dictionary. After all languages are processed, the global vocabulary size is measured and log-prior probabilities are computed once and stored.
 
+For each analyzer we first call its Train method and then call its Analyzer method on the target string.
 
 ## Alternative algorithms 
 
@@ -78,13 +79,13 @@ The program is split across four source files. Each has a distinct responsibilit
 
 `TextCleaner` handles all input reading and normalisation. It can load `.txt`, `.pdf` and `.docx` files using the PdfPig and OpenXml libraries, and exposes a `Clean` method that strips everything except letters and apostrophes, lowercases the result, and collapses whitespace. All three analyzers pass their training files through this class before doing any counting. `Tokenize` splits a cleaned string into a word list for the analyzers that work with words.
 
-`TextStats` computes basic statistics about a tokenized text — word count, unique word count, average word length, and type-token ratio. These are written to the batch report and have no effect on the predictions. Currently not used because of clutter.
+`TextStats` computes basic statistics about a tokenized text - word count, unique word count, average word length, and type-token ratio. These are written to the batch report and have no effect on the predictions. Currently not used because of clutter.
 
 **Analyzers.cs**
 
 `Languages` is a static class that holds the list of supported language codes and maps them to display names.
 
-`LanguageAnalyzer` is the abstract base class for all three detectors. It provides `LoadTrainingTexts` (which finds and cleans all training files for one language), and `ComputeConfidenceValue` (which measures how far ahead the winning language is from the runner-up and expresses this as a percentage).
+`LanguageAnalyzer` is the abstract base class for all three detectors. It provides `LoadTrainingTexts` (which finds and cleans all training files for one language), and `ComputeConfidenceValue` (which measures how far ahead the winning language is from the runner up and expresses this as a percentage).
 
 `NGramAnalyzer` implements the character sliding window, profile building and Out-of-Place distance scoring. It keeps a trained ranked profile per language in a dictionary of dictionaries.
 
@@ -98,7 +99,7 @@ The program is split across four source files. Each has a distinct responsibilit
 
 **Program.cs**
 
-`Program` parses command-line arguments in a simple loop and chooses one of three modes to use: interactive (prompt loop), batch (reads an input file, writes a report), or evaluation. The batch mode writes a report containing each analyzer's prediction with confidence score, a consensus line, and a summary with per-analyzer and per-language agreement statistics.
+`Program` parses command-line arguments in a simple loop and chooses one of three modes to use: interactive (prompt loop), batch (reads an input file, writes a report), or evaluation. The batch mode writes a report containing each analyzer's prediction with confidence score, a consensus line, and a summary with analyzer and language agreement statistics.
 
 
 ## User Guide 
